@@ -18,12 +18,38 @@ class C45Node(Node):
         self.children[idt] = child
 
 class C45(ID3):
-    def __init__(self,attr):
+    def __init__(self, attr):
         super().__init__(self,attr)
 
+    def prune(self, data):
+        self._recur_pruneable_true(self.node)
+
+
     @classmethod
-    def _gain(cls, entropy, new_entropy):
-        return super()._gain(entropy, new_entropy) / new_entropy
+    def _recur_pruneable_true(cls, node):
+        node._pruneable = True
+        for child in children:
+            cls._recur_pruneable_true(node.children[child])
+
+    @classmethod
+    def _best_attr(cls, data, target, attr_dict):
+        E = cls._entropy(target)
+        max_gain = 0
+        max_attr = None
+        for att in attr_dict:
+            idx = attr_dict[att]
+            E_sum = 0
+            split_sum = 0
+            targets = cls._divide_target_by_attr(data, target, idx)
+            for key in targets:
+                targ = targets[key]
+                E_sum += cls._entropy(targ) * len(targ) / len(target)
+                split_sum -= -cls._plogp(targ) * len(targ) / len(target)
+            gain = (E - E_sum) / split_sum
+            if gain > max_gain:
+                max_gain = gain
+                max_attr = att
+        return max_attr
 
     
         
