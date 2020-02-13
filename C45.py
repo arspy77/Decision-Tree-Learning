@@ -26,6 +26,11 @@ class C45(ID3):
 
 
     @classmethod
+    def _gain(cls, entropy, new_entropy):
+        if new_entropy == 0:
+            import math
+            return math.inf
+        return super()._gain(entropy, new_entropy) / new_entropy
     def _recur_pruneable_true(cls, node):
         node._pruneable = True
         for child in children:
@@ -51,6 +56,7 @@ class C45(ID3):
                 max_attr = att
         return max_attr
 
+    
     
         
 '''
