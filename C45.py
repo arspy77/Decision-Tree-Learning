@@ -40,7 +40,7 @@ class C45(ID3):
             for key in targets:
                 targ = targets[key]
                 E_sum += cls._entropy(targ) * len(targ) / len(target)
-                split_sum -= -cls._plogp(len(targ) / len(target))
+                split_sum -= cls._plogp(len(targ) / len(target))
             if split_sum == 0:
                 gain = float("inf")
             else:
@@ -50,7 +50,22 @@ class C45(ID3):
                 max_attr = att
         return max_attr
     
-    
+    def missing_values(self,data):
+        if data != []:
+            most_common = []
+            for n in range(len(data[0])):
+                col = [row[n]for row in data]
+                most_common_n, _ = Counter(col).most_common()[0]
+                most_common.append(most_common_n)
+            for i in range(len(data)):
+                for j in range(len(data[0])):
+                    if data[i][j] == '?':
+                        data[i][j] = most_common[j]
+        return data
+    def train(self, data, target):
+        data = self.missing_values(data)
+        print(data)
+        self._node = self._recur_train(data, target, self._attr_dict)
 
     def _recur_test_prune(self, row, value, node):
         if not node.children:
@@ -69,7 +84,7 @@ class C45(ID3):
             node.label = node.children['__default__'].label
             node.children = {}
             return
-        for child in children:
+        for child in node.children:
             cls._recur_prune(node.children[child])
     
     
@@ -116,8 +131,8 @@ if __name__ == '__main__':
     #         ['rainy','mild','high','strong']]
     # label = ['no', 'no', 'yes', 'yes', 'yes', 'no', 'yes', 'no', 'yes', 'yes', 'yes', 'yes', 'yes', 'no']
     # attr = ['outlook','temp','humidity','windy']
-    data = [[0, 0], [0, 1], [1, 0], [1, 1]]
-    label = [0, 0, 1, 1]
+    data = [[0, 0], [0, 1], [1, 0], [1, 1],[0,"?"],["?",0]]
+    label = [0, 0, 1, 1,1,1]
     attr = [2, 3]
     c45 = C45(attr)
     c45.train(data, label)
