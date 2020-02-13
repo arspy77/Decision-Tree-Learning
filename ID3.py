@@ -29,11 +29,12 @@ class Node:
 
 
 class ID3:
-    def __init__(self, attr):
+    def __init__(self, attr, node_type=Node):
         self._node = None
         self._attr_dict = {}
         for idx, att in enumerate(attr):
             self._attr_dict[att] = idx
+        self._node_type = node_type
 
     def train(self, data, target):
         self._node = self._recur_train(data, target, self._attr_dict)
@@ -98,34 +99,31 @@ class ID3:
             attr_data[value].append(row)
         return attr_data
 
-    @classmethod
-    def _recur_train(cls, data, target, attr_dict):
-        label, all_same_label = cls._check_label(target)
+    def _recur_train(self, data, target, attr_dict):
+        label, all_same_label = self._check_label(target)
         if all_same_label or not attr_dict:
-            return Node(label)
+            return self._node_type(label)
         
-        att = cls._best_attr(data, target, attr_dict)
-        node = Node(att)
+        att = self._best_attr(data, target, attr_dict)
+        node = self._node_type(att)
         idx = attr_dict[att]
-        datas = cls._divide_data_by_attr(data, idx)
-        targets = cls._divide_target_by_attr(data, target, idx)
+        datas = self._divide_data_by_attr(data, idx)
+        targets = self._divide_target_by_attr(data, target, idx)
         new_attr_dict = attr_dict.copy()
         del new_attr_dict[att]
         for value in datas:
-            child = cls._recur_train(datas[value], targets[value], new_attr_dict)
+            child = self._recur_train(datas[value], targets[value], new_attr_dict)
             node.add_child(value, child)
-        node.add_child('__default__', Node(label))
+        node.add_child('__default__', self._node_type(label))
         return node
 
     def _recur_test(self, row, node):
         if not node.children:
             return node.label
-        else:
-            idx = self._attr_dict[node.label]
-            if row[idx] not in node.children:
-                return self._recur_test(row, node.children['__default__'])
-            else:
-                return self._recur_test(row, node.children[row[idx]]) 
+        idx = self._attr_dict[node.label]
+        if row[idx] not in node.children:
+            return self._recur_test(row, node.children['__default__'])
+        return self._recur_test(row, node.children[row[idx]]) 
 
 if __name__ == '__main__':
     # data = [['sunny','hot','high','weak'],
