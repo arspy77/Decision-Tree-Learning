@@ -1,52 +1,29 @@
 from collections import Counter
-import DLT
+from ID3 import Node, ID3
 
 
 class C45Node(Node):
-    #tambahin depth biar bisa nge prun dari yang paling dalam
     def __init__(self, label=None, depth=0):
-        super().__init__(self,label)
+        super().__init__(self, label)
+        self.depth = 0
+        self.set_depth(depth)
+        
+    def set_depth(self, depth=0):
         self.depth = depth
-        
-    def add_child(self, idt, child):
-        child.depth = self.depth+1
-        self.children[idt] = child
-        
-    def printTree(self, n = 0):
-        for i in range(n):
-            print('| ', end='')
-        print('|-', end='')
-        print(self.label, end='')
-        if self.children:
-            print(' ?')
-        else:
-            print(' .')
         for child in self.children:
-            for i in range(n+1):
-                print('| ', end='')
-            print('|-', end='')
-            
-            print(child, '!')
-            self.children[child].printTree(n+2)
+            self.children[child].set_depth(depth + 1)
 
-# class C45(ID3):
-#     def __init__(self):
-#         super.__init__(self)
-#     def alt_select_best(self,cls, data, target, attr_dict):
-#         E = cls._entropy(target)
-#         max_gain = 0
-#         max_attr = None
-#         for att in attr_dict:
-#             idx = attr_dict[att]
-#             E_sum = 0
-#             targets = cls._divide_target_by_attr(data, target, idx)
-#             for key in targets:
-#                 targ = targets[key]
-#                 E_sum += cls._entropy(targ) * len(targ) / len(target)
-#             if E - E_sum > max_gain:
-#                 max_gain = E - E_sum
-#                 max_attr = att
-#         return att
+    def add_child(self, idt, child):
+        child.set_depth(self.depth + 1)
+        self.children[idt] = child
+
+class C45(ID3):
+    def __init__(self,attr):
+        super().__init__(self,attr)
+
+    @classmethod
+    def _gain(cls, entropy, new_entropy):
+        return super()._gain(entropy, new_entropy) / new_entropy
 
     
         
@@ -76,24 +53,28 @@ def load_dataset():
 '''    
 
 if __name__ == '__main__':
-    data = [['sunny','hot','high','weak'],
-            ['sunny','hot','high','strong'],
-            ['overcast','hot','high','weak'],
-            ['rainy','mild','high','weak'],
-            ['rainy','cool','normal','weak'],
-            ['rainy','cool','normal','strong'],
-            ['overcast','cool','normal','strong'],
-            ['sunny','mild','high','weak'],
-            ['sunny','cool','normal','weak'],
-            ['rainy','mild','normal','weak'],
-            ['sunny','mild','normal','strong'],
-            ['overcast','mild','high','strong'],
-            ['overcast','hot','normal','weak'],
-            ['rainy','mild','high','strong']]
-    label = ['no', 'no', 'yes', 'yes', 'yes', 'no', 'yes', 'no', 'yes', 'yes', 'yes', 'yes', 'yes', 'no']
-    attr = ['outlook','temp','humidity','windy']
+    # data = [['sunny','hot','high','weak'],
+    #         ['sunny','hot','high','strong'],
+    #         ['overcast','hot','high','weak'],
+    #         ['rainy','mild','high','weak'],
+    #         ['rainy','cool','normal','weak'],
+    #         ['rainy','cool','normal','strong'],
+    #         ['overcast','cool','normal','strong'],
+    #         ['sunny','mild','high','weak'],
+    #         ['sunny','cool','normal','weak'],
+    #         ['rainy','mild','normal','weak'],
+    #         ['sunny','mild','normal','strong'],
+    #         ['overcast','mild','high','strong'],
+    #         ['overcast','hot','normal','weak'],
+    #         ['rainy','mild','high','strong']]
+    # label = ['no', 'no', 'yes', 'yes', 'yes', 'no', 'yes', 'no', 'yes', 'yes', 'yes', 'yes', 'yes', 'no']
+    # attr = ['outlook','temp','humidity','windy']
+    data = [[0, 0], [0, 1], [1, 0], [1, 1]]
+    label = [0, 0, 1, 1]
+    attr = [2, 3]
     id3 = ID3(attr)
     id3.train(data, label)
+    id3._node.print_tree()
 
     for row in data:
         print(id3.test(row))

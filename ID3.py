@@ -71,6 +71,10 @@ class ID3:
         return attr_label
     
     @classmethod
+    def _gain(cls, entropy, new_entropy):
+        return entropy - new_entropy
+
+    @classmethod
     def _best_attr(cls, data, target, attr_dict):
         E = cls._entropy(target)
         max_gain = 0
@@ -82,8 +86,9 @@ class ID3:
             for key in targets:
                 targ = targets[key]
                 E_sum += cls._entropy(targ) * len(targ) / len(target)
-            if E - E_sum > max_gain:
-                max_gain = E - E_sum
+            gain = cls._gain(E, E_sum)
+            if gain > max_gain:
+                max_gain = gain
                 max_attr = att
         return max_attr
             
