@@ -154,72 +154,17 @@ if __name__ == '__main__':
     #         ['urgent', 'tidak', 'tidak']]
     # label = ['kumpul', 'belajar', 'kumpul', 'kumpul', 'jalan', 'kumpul', 'belajar', 'nonton', 'kumpul', 'belajar']
     # attr = ['deadline', 'hangout', 'malas']
-    data = [[0, 0], [0, 1], [1, 0], [1, 1]]
-    label = [0, 0, 1, 1]
-    attr = [2, 3]
+    import csv
+    myList=[]
+    label=[]
+    with open('tennis.csv', 'r') as f:
+        reader = csv.reader(f)
+        myList = list(reader)
+    attr = myList.pop(0)
+    attr.pop(len(attr)-1)
+    for el in myList:
+        label.append(el.pop(len(el)-1))
+    data = myList
     id3 = ID3(attr)
     id3.train(data, label)
     id3._node.print_tree()
-
-    for row in data:
-        print(id3.test(row))
-
-    # data = [[0, 0, 0],
-    #         [0, 0, 1],
-    #         [0, 1, 0],
-    #         [0, 1, 1],
-    #         [1, 0, 0],
-    #         [1, 0, 1],
-    #         [1, 1, 0],
-    #         [1, 1, 1]]
-    # label = range(8)
-    # attr = ['A', 'B', 'C']
-    # node = ID3(data, label, attr)
-
-    # for row in data:
-    #     print(test(row, attr, node))
-
-
-# outlook?
-# -sunny !
-# --humidity?
-# ---high !
-# ----no.
-# ---normal !
-# ----yes.
-# -overcast !
-# --yes.
-# -rainy !
-# --windy?
-# ---weak !
-# ----yes.
-# ---strong !
-# ----no.
-
-# A ?
-# -0 !
-# --B ?
-# ---0 !
-# ----C ?
-# -----0 !
-# ------0 .
-# -----1 !
-# ------1 .
-# -----default !
-# ------0 .
-# ---1 !
-# ----2 .
-# ---default !
-# ----0 .
-# -1 !
-# --4 .
-# -default !
-# --0 .
-# 0
-# 1
-# 2
-# 2
-# 4
-# 4
-# 4
-# 4

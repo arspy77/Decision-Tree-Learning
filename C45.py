@@ -21,7 +21,26 @@ class C45Node(Node):
 class C45(ID3):
     def __init__(self, attr, node_type=C45Node):
         super().__init__(attr, node_type)
-
+    
+    def _recur_test_prune(self, row, value, node):
+        if not node.children:
+            return
+        if node.children['__default__'].label != value:
+            node.pruneable = False
+        idx = self._attr_dict[node.label]
+        if row[idx] not in node.children:
+            self._recur_test_prune(row, value, node.children['__default__'])
+            return
+        self._recur_test_prune(row, value, node.children[row[idx]])
+    
+    @classmethod
+    def _recur_prune(cls, node):
+        if node.pruneable:
+            node.label = node.children['__default__'].label
+            node.children = {}
+            return
+        for child in node.children:
+            cls._recur_prune(node.children[child])
     def prune(self, data, target):
         for row, value in zip(data, target):
             self._recur_test_prune(row, value, self._node)
@@ -41,6 +60,7 @@ class C45(ID3):
                 threshold, gain = cls._calc_gain_continuous(data, target, idx)
             else:
                 threshold, gain = cls._calc_gain(data, target, idx)
+
             if gain > max_gain:
                 max_gain = gain
                 max_attr = att
@@ -62,31 +82,11 @@ class C45(ID3):
 
     def train(self, data, target):
         data = self._missing_values(data)
-        print(data)
         self._node = self._recur_train(data, target, self._attr_dict)
-
-    def _recur_test_prune(self, row, value, node):
-        if not node.children:
-            return
-        if node.children['__default__'].label != value:
-            node.pruneable = False
-        idx = self._attr_dict[node.label]
-        if row[idx] not in node.children:
-            self._recur_test_prune(row, value, node.children['__default__'])
-            return
-        self._recur_test_prune(row, value, node.children[row[idx]]) 
-
-    @classmethod
-    def _recur_prune(cls, node):
-        if node.pruneable:
-            node.label = node.children['__default__'].label
-            node.children = {}
-            return
-        for child in node.children:
-            cls._recur_prune(node.children[child])
 
     @classmethod
     def _calc_gain(cls, data, target, idx):
+        E = cls._entropy(target)
         E_sum = 0
         split_sum = 0
         targets = cls._divide_target_by_attr(data, target, idx)
@@ -98,7 +98,7 @@ class C45(ID3):
             gain = float('inf')
         else:
             gain = (E - E_sum) / split_sum
-        return gain, None
+        return None,gain
 
     @classmethod
     def _calc_gain_continuous(cls, data, target, idx):
@@ -149,8 +149,8 @@ class C45(ID3):
                 attr_data[value] = []
             attr_data[value].append(row)
         return attr_data
-
-    def _divide_target_by_attr(cls, data, target, idx, threshold):
+    @classmethod
+    def _divide_target_by_attr(cls, data, target, idx, threshold=None):
         attr_label = {}
         for idt, row in enumerate(data):
             value = None
@@ -203,29 +203,17 @@ def load_dataset():
 '''    
 
 if __name__ == '__main__':
-    # data = [['sunny','hot','high','weak'],
-    #         ['sunny','hot','high','strong'],
-    #         ['overcast','hot','high','weak'],
-    #         ['rainy','mild','high','weak'],
-    #         ['rainy','cool','normal','weak'],
-    #         ['rainy','cool','normal','strong'],
-    #         ['overcast','cool','normal','strong'],
-    #         ['sunny','mild','high','weak'],
-    #         ['sunny','cool','normal','weak'],
-    #         ['rainy','mild','normal','weak'],
-    #         ['sunny','mild','normal','strong'],
-    #         ['overcast','mild','high','strong'],
-    #         ['overcast','hot','normal','weak'],
-    #         ['rainy','mild','high','strong']]
-    # label = ['no', 'no', 'yes', 'yes', 'yes', 'no', 'yes', 'no', 'yes', 'yes', 'yes', 'yes', 'yes', 'no']
-    # attr = ['outlook','temp','humidity','windy']
-    data = [[0, 0], [0, 1], [1, 0], [1, 1], [0, '?'], ['?', 0]]
-    label = [0, 0, 1, 1, 1, 1]
-    attr = [2, 3]
+    import csv
+    myList=[]
+    label=[]
+    with open('tennis.csv', 'r') as f:
+        reader = csv.reader(f)
+        myList = list(reader)
+    attr = myList.pop(0)
+    attr.pop(len(attr)-1)
+    for el in myList:
+        label.append(el.pop(len(el)-1))
+    data = myList
     c45 = C45(attr)
     c45.train(data, label)
-    # c45.prune([[0, 0]], [0])
     c45._node.print_tree()
-
-    for row in data:
-        print(c45.test(row))
