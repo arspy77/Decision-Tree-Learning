@@ -40,9 +40,9 @@ class C45(ID3):
             for key in targets:
                 targ = targets[key]
                 E_sum += cls._entropy(targ) * len(targ) / len(target)
-                split_sum -= -cls._plogp(len(targ) / len(target))
+                split_sum -= cls._plogp(len(targ) / len(target))
             if split_sum == 0:
-                gain = float("inf")
+                gain = float('inf')
             else:
                 gain = (E - E_sum) / split_sum
             if gain > max_gain:
@@ -69,7 +69,7 @@ class C45(ID3):
             node.label = node.children['__default__'].label
             node.children = {}
             return
-        for child in children:
+        for child in node.children:
             cls._recur_prune(node.children[child])
     
     
@@ -121,7 +121,7 @@ if __name__ == '__main__':
     attr = [2, 3]
     c45 = C45(attr)
     c45.train(data, label)
-    c45.prune([[0, 0]], [0])
+    # c45.prune([[0, 0]], [0])
     c45._node.print_tree()
 
     for row in data:
