@@ -8,7 +8,6 @@ class Node:
         self.children = {}
 
     def add_child(self, idt, child):
-        child.depth = self.depth+1
         self.children[idt] = child
 
     def printTree(self, n = 0):

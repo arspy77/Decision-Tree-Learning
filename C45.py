@@ -28,53 +28,15 @@ class C45Node(Node):
             
             print(child, '!')
             self.children[child].printTree(n+2)
-            
-class ID3:
-    def __init__(self, attr):
-        self._node = None
-        self._attr_dict = {}
-        for idx, att in enumerate(attr):
-            self._attr_dict[att] = idx
 
-    def train(self, data, target):
-        self.node = self._recur_ID3(data, target, self._attr_dict)
-
-    def test(self, row):
-        return self._recur_test(row, self._node)
-
-    @classmethod
-    def _check_label(cls, target):
-        value, count = Counter(target).most_common()[0]
-        return value, count == len(target)
-
-    @classmethod
-    def _plogp(cls, value):
-        if value == 0:
-            return 0
-        return value * log2(value)
-
-    @classmethod
-    def _entropy(cls, target):
-        result = 0
-        count_total = len(target)
-        for _, count in Counter(target).most_common():
-            result -= cls._plogp(count/count_total)
-        return result
-
-    @classmethod
-    def _divide_target_by_attr(cls, data, target, idx):
-        attr_label = {}
-        for idt, row in enumerate(data):
-            value = row[idx]
-            if value not in attr_label:
-                attr_label[value] = []
-            attr_label[value].append(target[idt])
-        return attr_label
-    
-    @classmethod
-    def best_attr(cls, data, target, attr_dict):
+class C45(ID3):
+    def __init__(self,attr):
+        super().__init__(self,attr)
+    def alt_select_best(self,cls, data, target, attr_dict):
         E = cls._entropy(target)
         max_gain = 0
+        gain_list = []
+        tested_attribute = []
         max_attr = None
         for att in attr_dict:
             idx = attr_dict[att]
@@ -83,68 +45,13 @@ class ID3:
             for key in targets:
                 targ = targets[key]
                 E_sum += cls._entropy(targ) * len(targ) / len(target)
-            if E - E_sum > max_gain:
-                max_gain = E - E_sum
-                max_attr = att
+            gain_list.append(E-E_sum,att)
+        avg_gain = sum(gain_list[0])/len(gain_list)
+        for gain,att in gain_list:
+            if gain > avg_gain:
+                tested_attribute.append(gain,att)
+        for gain,att in avg_gain
         return att
-            
-    @classmethod
-    def _divide_data_by_attr(cls, data, idx):
-        attr_data = {}
-        for row in data:
-            value = row[idx]
-            if value not in attr_data:
-                attr_data[value] = []
-            attr_data[value].append(row)
-        return attr_data
-
-    @classmethod
-    def _recur_ID3(cls, data, target, attr_dict):
-        label, all_same_label = cls._check_label(target)
-        if all_same_label or not attr_dict:
-            return Node(label)
-        
-        att = best_attr(data, target, attr_dict)
-        node = Node(att)
-        idx = attr_dict[att]
-        datas = cls._divide_data_by_attr(data, idx)
-        targets = cls._divide_target_by_attr(data, target, idx)
-        new_attr_dict = attr_dict.copy()
-        del new_attr_dict[idx]
-        for value in datas:
-            child = cls._recur_ID3(datas[value], targets[value], new_attr_dict)
-            node.add_child(value, child)
-        node.add_child('__default__', Node(label))
-        return node
-
-    def _recur_test(self, row, node):
-        if not node.children:
-            return node.label
-        else:
-            idx = self._attr_dict[node.label]
-            if row[idx] not in node.children:
-                return self._recur_test(row, node.children['__default__'])
-            else:
-                return self._recur_test(row, node.children[row[idx]]) 
-
-# class C45(ID3):
-#     def __init__(self):
-#         super.__init__(self)
-#     def alt_select_best(self,cls, data, target, attr_dict):
-#         E = cls._entropy(target)
-#         max_gain = 0
-#         max_attr = None
-#         for att in attr_dict:
-#             idx = attr_dict[att]
-#             E_sum = 0
-#             targets = cls._divide_target_by_attr(data, target, idx)
-#             for key in targets:
-#                 targ = targets[key]
-#                 E_sum += cls._entropy(targ) * len(targ) / len(target)
-#             if E - E_sum > max_gain:
-#                 max_gain = E - E_sum
-#                 max_attr = att
-#         return att
 
     
         
