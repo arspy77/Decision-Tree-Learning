@@ -73,27 +73,21 @@ class C45(ID3):
             cls._recur_prune(node.children[child])
             
     @classmethod
-    def continuousAttr(data, column):
-        target = data.columns[-1]
-        value = sorted(data[column].unique())
+    def _continuous_attr(cls, data, target, idx):
+        value = sorted(data[idx].unique())
 
-        if len(value) == 1:
-            threshold = value[0]
-        else :
-            info_gain = [0 for i in range (len(value)-1)]
-            for i in range(len(value)-1) :
-                threshold = value[i]
-                candidate_value1 = data[data[column] <= threshold]
-                candidate_value2 = data[data[column] > threshold]
-                prob1 = len(candidate_value1) / len(data[column])
-                prob2 = len(candidate_value2) / len(data[column])
-                info_gain[i] = _entropy(data,target) - prob1*_entropy(candidate_value1) - prob2*_entropy(candidate_value2)            
-
-        best_gain = max(info_gain)
-        threshold = value[info_gain.index(max(info_gain))] 
-        temp = np.where(data[column] <= threshold, "<="+str(threshold), ">"+str(threshold))
+        threshold = value[0]
+        if len(value) > 2:
+            max_gain = 0
+            for val in value[1:-1]:
+                small_target = [target[idt] for idt, row in enumerate(data) if row[idx] <= val]
+                big_target = [target[idt] for idt, row in enumerate(data) if row[idx] > val]
+                gain = = cls._entropy(target) - len(small_target) / len(target) * cls._entropy(small_target) - len(big_target) / len(target) * cls._entropy(big_target)
+                if gain > max_gain:
+                    max_gain = gain
+                    threshold = val
         
-        return temp, best_gain
+        return threshold
     
     
         
