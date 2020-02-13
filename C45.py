@@ -71,6 +71,29 @@ class C45(ID3):
             return
         for child in children:
             cls._recur_prune(node.children[child])
+            
+    @classmethod
+    def continuousAttr(data, column):
+        target = data.columns[-1]
+        value = sorted(data[column].unique())
+
+        if len(value) == 1:
+            threshold = value[0]
+        else :
+            info_gain = [0 for i in range (len(value)-1)]
+            for i in range(len(value)-1) :
+                threshold = value[i]
+                candidate_value1 = data[data[column] <= threshold]
+                candidate_value2 = data[data[column] > threshold]
+                prob1 = len(candidate_value1) / len(data[column])
+                prob2 = len(candidate_value2) / len(data[column])
+                info_gain[i] = _entropy(data,target) - prob1*_entropy(candidate_value1) - prob2*_entropy(candidate_value2)            
+
+        best_gain = max(info_gain)
+        threshold = value[info_gain.index(max(info_gain))] 
+        temp = np.where(data[column] <= threshold, "<="+str(threshold), ">"+str(threshold))
+        
+        return temp, best_gain
     
     
         
