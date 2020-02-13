@@ -4,7 +4,8 @@ from ID3 import Node, ID3
 
 class C45Node(Node):
     def __init__(self, label=None, depth=0):
-        super().__init__(self, label)
+        super().__init__(label)
+        self.pruneable = True
         self.depth = 0
         self.set_depth(depth)
         
@@ -18,23 +19,13 @@ class C45Node(Node):
         self.children[idt] = child
 
 class C45(ID3):
-    def __init__(self, attr):
-        super().__init__(self,attr)
+    def __init__(self, attr, node_type=C45Node):
+        super().__init__(attr, node_type)
 
-    def prune(self, data):
-        self._recur_pruneable_true(self.node)
-
-
-    @classmethod
-    def _gain(cls, entropy, new_entropy):
-        if new_entropy == 0:
-            import math
-            return math.inf
-        return super()._gain(entropy, new_entropy) / new_entropy
-    def _recur_pruneable_true(cls, node):
-        node._pruneable = True
-        for child in children:
-            cls._recur_pruneable_true(node.children[child])
+    def prune(self, data, target):
+        for row, value in zip(data, target):
+            self._recur_test_prune(row, value, self._node)
+        self._recur_prune(self._node)
 
     @classmethod
     def _best_attr(cls, data, target, attr_dict):
@@ -61,6 +52,25 @@ class C45(ID3):
     
     
 
+    def _recur_test_prune(self, row, value, node):
+        if not node.children:
+            return
+        if node.children['__default__'].label != value:
+            node.pruneable = False
+        idx = self._attr_dict[node.label]
+        if row[idx] not in node.children:
+            self._recur_test_prune(row, value, node.children['__default__'])
+            return
+        self._recur_test_prune(row, value, node.children[row[idx]]) 
+
+    @classmethod
+    def _recur_prune(cls, node):
+        if node.pruneable:
+            node.label = node.children['__default__'].label
+            node.children = {}
+            return
+        for child in children:
+            cls._recur_prune(node.children[child])
     
     
         
@@ -109,9 +119,10 @@ if __name__ == '__main__':
     data = [[0, 0], [0, 1], [1, 0], [1, 1]]
     label = [0, 0, 1, 1]
     attr = [2, 3]
-    id3 = ID3(attr)
-    id3.train(data, label)
-    id3._node.print_tree()
+    c45 = C45(attr)
+    c45.train(data, label)
+    c45.prune([[0, 0]], [0])
+    c45._node.print_tree()
 
     for row in data:
-        print(id3.test(row))
+        print(c45.test(row))
